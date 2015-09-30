@@ -1,8 +1,11 @@
 package com.example.devaraj.weathertrail;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,8 +14,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -26,7 +31,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -61,11 +65,25 @@ public class MainActivityFragment extends Fragment {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
-            FetchWeatherTask fetchWeatherTask=new FetchWeatherTask();
-            fetchWeatherTask.execute("94043");
+            updateWeather();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void updateWeather()
+    {
+        FetchWeatherTask fetchWeatherTask=new FetchWeatherTask();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = prefs.getString(getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+        fetchWeatherTask.execute(location);
+    }
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
     }
 
     @Override
@@ -73,12 +91,21 @@ public class MainActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootview = inflater.inflate(R.layout.fragment_main, container, false);
 
-String[] str1={"devd","reddy","g"};
-        ArrayList<String> arrayList = new ArrayList<String>(Arrays.asList(str1));
+//String[] str1={"devd","reddy","g"};
+        ArrayList<String> arrayList = new ArrayList<String>();
        arrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_view_forecast, R.id.list_view_forecast_textview,arrayList);
 
         ListView listView = (ListView) rootview.findViewById(R.id.list_view_forecast_list);
         listView.setAdapter(arrayAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String forecast1=arrayAdapter.getItem(position);
+                Toast.makeText(getActivity(), forecast1, Toast.LENGTH_SHORT).show();
+                Intent intent=new Intent(getActivity(),DetailActivity.class).putExtra(Intent.EXTRA_TEXT,forecast1);
+                startActivity(intent);
+            }
+        });
 
 
         return rootview;
